@@ -79,4 +79,4 @@
    - map<string,serverstruct*>
 
 Для нитей - std::thread, 
-для синхронизации - std::mutex
+для синхронизации - std::mutex, kkoSemaphore

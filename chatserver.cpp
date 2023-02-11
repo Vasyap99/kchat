@@ -1,5 +1,6 @@
 
 #include "kkoSocket.h"
+#include "kkoSemaphore.h"
 
 #include <cstdlib>
 #include <unistd.h>
@@ -64,7 +65,7 @@ chatserver cs1;
 
 
 map <string,serverstruct*> data1;
-mutex m  //блокировка на саму data1 и паралельное использование сокетов;
+Semaphore m  //блокировка на саму data1 и паралельное использование сокетов;
      ,mf //блокировка на файлы сообщений
 	 ,m2;//блокировка на serverstruct-ы	(их удаление,очистку и заполнение)
 
@@ -291,6 +292,7 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 			while(i.second->t!=nullptr){}	
 			m2.lock();
 			delete i.second;			
+			data1[i.first]=nullptr;
 			m2.unlock();			
 		}
 		m.unlock();					
