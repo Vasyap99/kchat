@@ -73,19 +73,6 @@ class tmpException{};
 
 void run(serverstruct *d){//нить обработки соединения с клиентом
 	try{
-		//отправка списка пользователей
-		m.lock();
-		for(auto ms: data1){
-			try{
-				writeS(*(d->s),ms.second->login);
-				writeS(*(d->s),ms.second->fio);				
-			}catch(...){
-				m.unlock();
-				throw tmpException();
-			}
-		}
-		m.unlock();
-		writeS(*(d->s),"");			//(пустая строка означает конец списка)
 		//отправляем закэшированные сообщения
 		if (access(("msgs-"+d->login+".dat").c_str(), F_OK) == 0) { 				// file exists?
 			mf.lock();
@@ -212,7 +199,6 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 					if(data1.find(login)==data1.end()) b=false; //(нет элемента с таким индексом?)
 					else{
 						if(data1[login]!=nullptr && data1[login]->login==login && data1[login]->passw==pass && data1[login]->t==nullptr){
-							data1[login]->setS(s);
 						}else b1=false;
 					}
 				}catch(...){//исключение - нет такого пользователя
@@ -220,7 +206,14 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 				}
 				if(b && b1){
 					try{
-						writeS(*s,"ok"); //авторизация успешна
+						writeS(*s,"ok"); //авторизация успешна						
+						//отправка списка пользователей
+						for(auto ms: data1){
+							writeS(*s,ms.second->login);
+							writeS(*s,ms.second->fio);				
+						}
+						writeS(*s,"");			//(пустая строка означает конец списка)						
+						data1[login]->setS(s);						
 					}catch(...){
 						m.unlock();	 m2.unlock();					
 						s->close();
