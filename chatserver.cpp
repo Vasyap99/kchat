@@ -65,9 +65,9 @@ chatserver cs1;
 
 
 map <string,serverstruct*> data1;
-mutex m  //блокировка на data1;
+mutex m  //блокировка на саму data1 и паралельное использование сокетов;
      ,mf //блокировка на файлы сообщений
-	 ,m2;//блокировка на serverstruct-ы	
+	 ,m2;//блокировка на serverstruct-ы	(их удаление,очистку и заполнение)
 
 class tmpException{};
 
@@ -98,11 +98,14 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 					login0=readS(f);
 					if(login0=="") break;
 					msg0=readS(f);									
+					m.lock();
 					writeS(*(d->s),login0);	
 					writeS(*(d->s),msg0);					
+					m.unlock();					
 				}catch(...){
 					fclose(f);					
 					mf.unlock();
+					m.unlock();										
 					throw tmpException();
 				}
 				cout << "SEND Cached:" <<d->login <<' ' <<login0 <<' ' <<msg0 <<endl;				
