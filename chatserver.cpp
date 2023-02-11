@@ -7,7 +7,6 @@
 #include <thread>
 #include <mutex>
 
-
 using namespace kko;
 
 struct serverstruct{
@@ -211,7 +210,7 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 				try{
 					if(data1.find(login)==data1.end()) b=false; //(нет элемента с таким индексом?)
 					else{
-						if(data1[login]!=nullptr && data1[login]->login==login && data1[login]->passw==pass && data1[login]->s==nullptr){
+						if(data1[login]!=nullptr && data1[login]->login==login && data1[login]->passw==pass && data1[login]->t==nullptr){
 							data1[login]->setS(s);
 						}else b1=false;
 					}
