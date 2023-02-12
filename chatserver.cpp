@@ -4,6 +4,7 @@
 
 #include <cstdlib>
 #include <unistd.h>
+#include <winbase.h>
 #include <map>
 #include <thread>
 #include <mutex>
@@ -128,10 +129,20 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 				m.unlock();
 				m2.unlock();
 				mf.lock();
-				FILE *f=fopen((string("msgs-")+LOGIN+".dat").c_str(),"ab");
+					CopyFile(//сохраняем временную копию файла для редактирования
+					  	(string("msgs-")+LOGIN+".dat").c_str(),
+  						(string("msgs-")+LOGIN+".dat1").c_str(),
+  						false
+					);				
+				FILE *f=fopen((string("msgs-")+LOGIN+".dat1").c_str(),"ab");
 				writeS(f,d->login);
 				writeS(f,msg);
 				fclose(f);
+					CopyFile(//заменяем временной копией исходный файл
+					  	(string("msgs-")+LOGIN+".dat1").c_str(),
+  						(string("msgs-")+LOGIN+".dat").c_str(),
+  						false
+					);				
 				mf.unlock();
 			}
 		}					
@@ -250,11 +261,21 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 				}			
 				if(b && b1){//регистрация
 					//
-					FILE *f=fopen("serverdb.dat","ab");
+					CopyFile(//сохраняем временную копию файла для редактирования
+					  	"serverdb.dat",
+  						"serverdb1.dat",
+  						false
+					);
+					FILE *f=fopen("serverdb1.dat","ab");
 					writeS(f,login);
 					writeS(f,pass);			
 					writeS(f,fio);			
 					fclose(f);
+					CopyFile(//заменяем временной копией исходный файл
+					  	"serverdb1.dat",
+  						"serverdb.dat",
+  						false
+					);					
 					//
 					try{
 						writeS(*s,"ok");
