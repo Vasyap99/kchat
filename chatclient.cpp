@@ -34,6 +34,19 @@ void writeS(Socket s,string d){
 	s.send(d+"\n");
 }
 
+string readAddr(){
+	FILE *f=fopen("addr.dat","rb");
+	string  addr=readS(f),
+	fclose(f);
+	return addr;
+}
+string readPort(){
+	FILE *f=fopen("port.dat","rb");
+	string  port=readS(f),
+	fclose(f);
+	return port;
+}
+
 struct clientstruct{
 	string fio;
 	vector<string> msgs;
@@ -48,7 +61,7 @@ class chatclient{
 	bool d;
 public:
 	chatclient()
-		:s(Connect("127.0.0.1",8087)), d(false)
+		:s(Connect(readAddr(),readPort())), d(false)
 	{}
 	void run1(int argc, char** argv);
 	void done();
