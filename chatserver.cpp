@@ -1,8 +1,10 @@
 
 #include "kkoSocket.h"
+#include "kko_textsocket.h"
 #include "kkoSemaphore.h"
 
 #include <cstdlib>
+#include "kko_textfile.h"
 #include <unistd.h>
 #include <winbase.h>
 #include <map>
@@ -26,6 +28,7 @@ public:
 	{}
 };
 
+/*
 string readS(FILE *f){
 	string s;
 	char b;
@@ -58,7 +61,7 @@ void writeS(FILE*f,const string &s){
 void writeS(FILE*f,const string &&s){
 	fputs((s+"\r\n").c_str(),f);
 }
-
+*/
 
 class chatserver{
 	ServerSocket ss;

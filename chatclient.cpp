@@ -1,47 +1,17 @@
 
 #include "kkoSocket.h"
+#include "kko_textsocket.h"
 #include <map>
 #include <thread>
 #include <mutex>
 #include <cstdlib>
+#include "kko_textfile.h"
 
 
 using namespace kko;
 using namespace std;
 
 
-string readS(FILE *f){
-	string s;
-	char b;
-	while(true){
-		fread(&b,1,1,f);
-		if(b!='\r' && b!='\n' && !feof(f)) s+=b;
-		else if(b=='\n' || feof(f)) break;
-	}
-	return s;
-}
-
-string readS(Socket &s){
-	string r="";
-	while(true){
-		string b=s.recv(1);
-		if(b!="\n" && b!="\r") r+=b;
-		if(b=="\n") break;
-	}
-	return r;
-}
-void writeS(Socket &s,const string &d){
-	s.send(d+"\n");
-}
-void writeS(Socket &s,const string &&d){
-	s.send(d+"\n");
-}
-void writeS(FILE*f,const string &s){
-	fputs((s+"\r\n").c_str(),f);
-}
-void writeS(FILE*f,const string &&s){
-	fputs((s+"\r\n").c_str(),f);
-}
 
 string readAddr(){
 	FILE *f=fopen("addr.dat","rb");
