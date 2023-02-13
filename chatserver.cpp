@@ -37,7 +37,7 @@ string readS(FILE *f){
 	return s;
 }
 
-string readS(Socket s){
+string readS(Socket &s){
 	string r="";
 	while(true){
 		string b=s.recv(1);
@@ -46,12 +46,17 @@ string readS(Socket s){
 	}
 	return r;
 }
-void writeS(Socket s,string d){
+void writeS(Socket &s,const string &d){
 	s.send(d+"\n");
 }
-void writeS(FILE*f,string s){
-	s+="\r\n";
-	fputs(s.c_str(),f);
+void writeS(Socket &s,const string &&d){
+	s.send(d+"\n");
+}
+void writeS(FILE*f,const string &s){
+	fputs((s+"\r\n").c_str(),f);
+}
+void writeS(FILE*f,const string &&s){
+	fputs((s+"\r\n").c_str(),f);
 }
 
 

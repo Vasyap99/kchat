@@ -21,7 +21,7 @@ string readS(FILE *f){
 	return s;
 }
 
-string readS(Socket s){
+string readS(Socket &s){
 	string r="";
 	while(true){
 		string b=s.recv(1);
@@ -30,19 +30,28 @@ string readS(Socket s){
 	}
 	return r;
 }
-void writeS(Socket s,string d){
+void writeS(Socket &s,const string &d){
 	s.send(d+"\n");
+}
+void writeS(Socket &s,const string &&d){
+	s.send(d+"\n");
+}
+void writeS(FILE*f,const string &s){
+	fputs((s+"\r\n").c_str(),f);
+}
+void writeS(FILE*f,const string &&s){
+	fputs((s+"\r\n").c_str(),f);
 }
 
 string readAddr(){
 	FILE *f=fopen("addr.dat","rb");
-	string  addr=readS(f),
+	string  addr=readS(f);
 	fclose(f);
 	return addr;
 }
 string readPort(){
 	FILE *f=fopen("port.dat","rb");
-	string  port=readS(f),
+	string  port=readS(f);
 	fclose(f);
 	return port;
 }
@@ -61,7 +70,7 @@ class chatclient{
 	bool d;
 public:
 	chatclient()
-		:s(Connect(readAddr(),readPort())), d(false)
+		:s(Connect( readAddr().c_str(),stoi(readPort()) )), d(false)
 	{}
 	void run1(int argc, char** argv);
 	void done();
