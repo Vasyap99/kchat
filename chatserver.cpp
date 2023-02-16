@@ -160,6 +160,7 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 				cout << "SEND Cached:" <<d->login <<' ' <<login0 <<' ' <<msg0 <<endl;				
 			}
 			fclose(f);
+			remove(("msgs-"+d->login+".dat1").c_str());			
 			remove(("msgs-"+d->login+".dat").c_str());
 			mf.unlock();		 				
 		}
