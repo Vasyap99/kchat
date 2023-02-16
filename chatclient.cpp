@@ -160,7 +160,7 @@ void chatclient::run1(int argc, char** argv){
 	while(true){
 		if(sgn) break;
 		string cmd;
-		cout << "[Enter command(S-send msg, W-show msgs, q-quit)]" << endl;
+		cout << "[Enter command(S-send msg, A-send All, W-show msgs, q-quit)]" << endl;
 		cin >> cmd;
 		if(cmd=="q"){
 			s.close();
@@ -181,7 +181,24 @@ void chatclient::run1(int argc, char** argv){
 			}
 			m.lock();
 			if(data1.find(LOGIN)!=data1.end() && data1[LOGIN]!=nullptr) data1[LOGIN]->msgs.push_back(string(" <<< ")+MSG);
+			m.unlock();	
+		}else if(cmd=="A"){
+			string MSG;		
+			cout << "Enter msg:";
+			cin >> MSG;	
+			try{
+				writeS(s,"A");
+				writeS(s,MSG);
+			}catch(...){
+				break;
+			}
+			m.lock();
+			for(auto it:data1){
+				const string &LOGIN=it.first;
+				if(data1[LOGIN]!=nullptr) data1[LOGIN]->msgs.push_back(string(" <<< ")+MSG);
+			}
 			m.unlock();				
+						
 		}else if(cmd=="W"){
 			m.lock();
 			map <string, clientstruct*> :: iterator it = data1.begin();

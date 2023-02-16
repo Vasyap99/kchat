@@ -28,40 +28,6 @@ public:
 	{}
 };
 
-/*
-string readS(FILE *f){
-	string s;
-	char b;
-	while(true){
-		fread(&b,1,1,f);
-		if(b!='\r' && b!='\n' && !feof(f)) s+=b;
-		else if(b=='\n' || feof(f)) break;
-	}
-	return s;
-}
-
-string readS(Socket &s){
-	string r="";
-	while(true){
-		string b=s.recv(1);
-		if(b!="\n" && b!="\r") r+=b;
-		if(b=="\n") break;
-	}
-	return r;
-}
-void writeS(Socket &s,const string &d){
-	s.send(d+"\n");
-}
-void writeS(Socket &s,const string &&d){
-	s.send(d+"\n");
-}
-void writeS(FILE*f,const string &s){
-	fputs((s+"\r\n").c_str(),f);
-}
-void writeS(FILE*f,const string &&s){
-	fputs((s+"\r\n").c_str(),f);
-}
-*/
 
 class chatserver{
 	ServerSocket ss;
@@ -79,6 +45,93 @@ Semaphore m  //блокировка на саму data1 и паралельное использование сокетов;
 	 ,m2;//блокировка на serverstruct-ы	(их удаление,очистку и заполнение)
 
 class tmpException{};
+
+void sendMsg(serverstruct *d,const string& msg,const string& LOGIN){//отправка сообщения пользователю
+			//проверяем, есть ли элемент с таким индексом
+			m.lock();
+			if(data1.find(LOGIN)==data1.end()){//нет такого индекса
+				m.unlock();
+				return; //continue
+			}	
+			m2.lock();
+			if(data1[LOGIN]!=nullptr && data1[LOGIN]->s!=nullptr){		//если клиент подключен, передаем ему
+				try{
+					writeS(*(data1[LOGIN]->s),d->login);	
+					writeS(*(data1[LOGIN]->s),msg);
+				}catch(...){
+					//m.unlock();
+					//m2.unlock();
+					//throw tmpException();
+				}
+				m2.unlock();				
+				m.unlock();
+			}else{  								//иначе пишем в файл
+				m2.unlock();			
+				m.unlock();
+				mf.lock();
+					CopyFile(//сохраняем временную копию файла для редактирования
+					  	(string("msgs-")+LOGIN+".dat").c_str(),
+  						(string("msgs-")+LOGIN+".dat1").c_str(),
+  						false
+					);				
+				FILE *f=fopen((string("msgs-")+LOGIN+".dat1").c_str(),"ab");
+				writeS(f,d->login);
+				writeS(f,msg);
+				fclose(f);
+					CopyFile(//заменяем временной копией исходный файл
+					  	(string("msgs-")+LOGIN+".dat1").c_str(),
+  						(string("msgs-")+LOGIN+".dat").c_str(),
+  						false
+					);				
+				mf.unlock();
+			}
+}
+
+void sendMsgAll(serverstruct *d,const string& msg){//отправка сообщения всем пользователям (широковещательная)
+			//проверяем, есть ли элемент с таким индексом
+			m.lock();
+			m2.lock();			
+			for(auto it:data1){
+			
+			string &LOGIN=it.second->login;
+
+			
+			/*if(data1.find(LOGIN)==data1.end()){//нет такого индекса
+				continue;
+			}*/	
+			if(data1[LOGIN]!=nullptr && data1[LOGIN]->s!=nullptr){		//если клиент подключен, передаем ему
+				try{
+					writeS(*(data1[LOGIN]->s),d->login);	
+					writeS(*(data1[LOGIN]->s),msg);
+				}catch(...){
+					//m.unlock();
+					//m2.unlock();
+					//throw tmpException();
+				}
+			}else{  								//иначе пишем в файл
+				mf.lock();
+					CopyFile(//сохраняем временную копию файла для редактирования
+					  	(string("msgs-")+LOGIN+".dat").c_str(),
+  						(string("msgs-")+LOGIN+".dat1").c_str(),
+  						false
+					);				
+				FILE *f=fopen((string("msgs-")+LOGIN+".dat1").c_str(),"ab");
+				writeS(f,d->login);
+				writeS(f,msg);
+				fclose(f);
+					CopyFile(//заменяем временной копией исходный файл
+					  	(string("msgs-")+LOGIN+".dat1").c_str(),
+  						(string("msgs-")+LOGIN+".dat").c_str(),
+  						false
+					);				
+				mf.unlock();
+			}
+			
+			}//for
+			m2.unlock();						
+			m.unlock();
+
+}
 
 void run(serverstruct *d){//нить обработки соединения с клиентом
 	try{
@@ -111,47 +164,16 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 			mf.unlock();		 				
 		}
 		//-цикл пересылки сообщений
-		while(true){			
-			readS(*(d->s)); //"S"
-			string LOGIN=readS(*(d->s));
-			string msg=readS(*(d->s));
-			//проверяем, есть ли элемент с таким индексом
-			m.lock();
-			if(data1.find(LOGIN)==data1.end()){//нет такого индекса
-				m.unlock();
-				continue;
-			}	
-			m2.lock();
-			if(data1[LOGIN]!=nullptr && data1[LOGIN]->s!=nullptr){		//если клиент подключен, передаем ему
-				try{
-					writeS(*(data1[LOGIN]->s),d->login);	
-					writeS(*(data1[LOGIN]->s),msg);
-				}catch(...){
-					m.unlock();
-					m2.unlock();
-					throw tmpException();
-				}
-				m.unlock();
-				m2.unlock();
-			}else{  								//иначе пишем в файл
-				m.unlock();
-				m2.unlock();
-				mf.lock();
-					CopyFile(//сохраняем временную копию файла для редактирования
-					  	(string("msgs-")+LOGIN+".dat").c_str(),
-  						(string("msgs-")+LOGIN+".dat1").c_str(),
-  						false
-					);				
-				FILE *f=fopen((string("msgs-")+LOGIN+".dat1").c_str(),"ab");
-				writeS(f,d->login);
-				writeS(f,msg);
-				fclose(f);
-					CopyFile(//заменяем временной копией исходный файл
-					  	(string("msgs-")+LOGIN+".dat1").c_str(),
-  						(string("msgs-")+LOGIN+".dat").c_str(),
-  						false
-					);				
-				mf.unlock();
+		while(true){		
+			string cmd;	
+			cmd=readS(*(d->s)); //"S" - отправка сообщения одному пользователю
+			if(cmd=="S"){
+				string LOGIN=readS(*(d->s));
+				string msg=readS(*(d->s));
+				sendMsg(d,msg,LOGIN);				
+			}else if(cmd=="A"){ //"S" - отправка сообщения всем пользователям
+				string msg=readS(*(d->s));			
+				sendMsgAll(d,msg);
 			}
 		}					
 	}catch(...){ //разрываем соединение и удаляем объект нити
