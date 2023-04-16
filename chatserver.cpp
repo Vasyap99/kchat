@@ -305,10 +305,14 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 					//
 					try{
 						writeS(*s,"ok");
-					}catch(...){}	
+					}catch(...){}
+					s->close();	
 					delete s;									
 					//
-					this->done(); //завершаем сервер					
+					//this->done(); //завершаем сервер		
+					m.lock();
+					data1.insert(make_pair(login,new serverstruct(fio,login,pass)));
+					m.unlock();
 				}else{
 					try{
 						writeS(*s,"err");
