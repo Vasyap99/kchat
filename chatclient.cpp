@@ -171,7 +171,10 @@ void chatclient::run1(int argc, char** argv){
 			cout << "Enter user ID:";
 			cin >> LOGIN;			
 			cout << "Enter msg:";
-			cin >> MSG;	
+			// Ignore to the end of Stream
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+			std::getline(std::cin, MSG);	
 			try{
 				writeS(s,"S");
 				writeS(s,LOGIN);
@@ -185,7 +188,8 @@ void chatclient::run1(int argc, char** argv){
 		}else if(cmd=="A"){
 			string MSG;		
 			cout << "Enter msg:";
-			cin >> MSG;	
+			std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			std::getline(std::cin, MSG);	
 			try{
 				writeS(s,"A");
 				writeS(s,MSG);
