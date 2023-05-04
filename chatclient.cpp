@@ -8,6 +8,12 @@
 #include "kko_textfile.h"
 
 
+#include "kko_ObjectMapper.h"
+#include <fstream>
+#include <unistd.h>
+#include <winbase.h>
+
+
 using namespace kko;
 using namespace std;
 
@@ -50,12 +56,59 @@ chatclient cc;
 map <string,clientstruct*> data1;
 mutex m,m2;
 volatile bool sgn(false);
+
+class msg{
+public:
+	string msg1;
+	msg(){}
+	msg(string m){
+		msg1=m;
+	}
+};
+void cacheMsg(const string&LOGIN,const string& msg1){//кэширование сообщения
+	remove(("msgs-"+LOGIN+".dat1").c_str());	
+		CopyFile(//сохраняем временную копию файла для редактирования
+		  	(string("msgs-")+LOGIN+".dat").c_str(),
+			(string("msgs-")+LOGIN+".dat1").c_str(),
+			false
+		);				
+	//
+	fstream f( ("msgs-"+LOGIN+".dat1").c_str() , ios::app | ios::ate );
+	ObjectMapper om;
+	msg m(msg1);
+	om.writeValue(f, &m,"s",{"msg"});
+	f.close();
+
+		CopyFile(//заменяем временной копией исходный файл
+		  	(string("msgs-")+LOGIN+".dat1").c_str(),
+			(string("msgs-")+LOGIN+".dat").c_str(),
+			false
+		);	
+}
+
+void loadMsgs(string login,clientstruct *cs){
+	ObjectMapper om;
+	
+	cout << ("msgs-"+login+".dat") <<endl;
+	
+	fstream f( ("msgs-"+login+".dat").c_str() , ios::in);
+
+	while(!f.eof()){
+		cout << ">>>reading value:"<<endl;			
+		msg m = om.readValue<msg>(f,"s");
+		cout << ">>>OK"<<endl;
+		cs->msgs.push_back(m.msg1);
+	}	
+}
+
+
 void run(Socket*s){	//нить чтения сообщений
     while(true){
     	try{
 			string LOGIN=readS(*s);
 			string msg=readS(*s);
 			m.lock();
+			cacheMsg(LOGIN,string(" >>> ")+msg);			
 			if(data1.find(LOGIN)!=data1.end() && data1[LOGIN]!=nullptr)
 				data1[LOGIN]->msgs.push_back(string(" >>> ")+msg);
 			m.unlock();		
@@ -143,7 +196,10 @@ void chatclient::run1(int argc, char** argv){
 			if(d=="") break;
 			string login=d;
 			string FIO=readS(s);
-			data1.insert(make_pair(login,new clientstruct(FIO)));
+			clientstruct *cs;
+			data1.insert(make_pair(login,cs=new clientstruct(FIO)));
+			if (access(("msgs-"+login+".dat").c_str(), F_OK) == 0) 
+				loadMsgs(login,cs);
 			cout << "reading users list: " << login << FIO << endl;
 		}	
 	}catch(...){
@@ -183,6 +239,7 @@ void chatclient::run1(int argc, char** argv){
 				break;
 			}
 			m.lock();
+			cacheMsg(LOGIN,string(" <<< ")+MSG);
 			if(data1.find(LOGIN)!=data1.end() && data1[LOGIN]!=nullptr) data1[LOGIN]->msgs.push_back(string(" <<< ")+MSG);
 			m.unlock();	
 		}else if(cmd=="A"){
@@ -199,6 +256,7 @@ void chatclient::run1(int argc, char** argv){
 			m.lock();
 			for(auto it:data1){
 				const string &LOGIN=it.first;
+				cacheMsg(LOGIN,string(" <<< ")+MSG);
 				if(data1[LOGIN]!=nullptr) data1[LOGIN]->msgs.push_back(string(" <<< ")+MSG);
 			}
 			m.unlock();				
