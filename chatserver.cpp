@@ -6,10 +6,12 @@
 #include <cstdlib>
 #include "kko_textfile.h"
 #include <unistd.h>
-#include <winbase.h>
+//#include <winbase.h>
 #include <map>
 #include <thread>
 #include <mutex>
+
+#include "kko_files.h"
 
 using namespace kko;
 
@@ -34,7 +36,7 @@ class chatserver{
 public:
 	//chatserver(){}
 	void run1();
-	done();
+	void done();
 };
 chatserver cs1;
 
@@ -51,8 +53,7 @@ void cacheMsg(serverstruct *d,const string& msg,const string& LOGIN){//кэширован
 	remove(("msgs-"+LOGIN+".dat1").c_str());	
 		CopyFile(//сохраняем временную копию файла для редактирования
 		  	(string("msgs-")+LOGIN+".dat").c_str(),
-			(string("msgs-")+LOGIN+".dat1").c_str(),
-			false
+			(string("msgs-")+LOGIN+".dat1").c_str()
 		);				
 	FILE *f=fopen((string("msgs-")+LOGIN+".dat1").c_str(),"ab");
 	writeS(f,d->login);
@@ -60,8 +61,7 @@ void cacheMsg(serverstruct *d,const string& msg,const string& LOGIN){//кэширован
 	fclose(f);
 		CopyFile(//заменяем временной копией исходный файл
 		  	(string("msgs-")+LOGIN+".dat1").c_str(),
-			(string("msgs-")+LOGIN+".dat").c_str(),
-			false
+			(string("msgs-")+LOGIN+".dat").c_str()
 		);				
 	mf.unlock();
 	;
@@ -129,7 +129,7 @@ void sendMsgAll(serverstruct *d,const string& msg){//отправка сообщения всем пол
 void run(serverstruct *d){//нить обработки соединения с клиентом
 	try{
 		//отправляем закэшированные сообщения
-		if (access(("msgs-"+d->login+".dat").c_str(), F_OK) == 0) { 				// file exists?
+		if (fExists("msgs-"+d->login+".dat")) { 				// file exists?
 			mf.lock();
 			FILE *f=fopen((string("msgs-")+d->login+".dat").c_str(),"rb");
 			try{
@@ -223,26 +223,26 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 				//авторизация клиента
 				string login,pass;
 				try{
-					login=readS(*s);		
-					pass=readS(*s);				
-				}catch(...){
+					login=readS(*s);					cout << "2.1" <<endl;
+					pass=readS(*s);							cout << "2.2" <<endl;
+				}catch(...){			cout << "2.3" <<endl;
 					delete s;
 					continue;					
-				}
-				m.lock(); m2.lock();
+				}									cout << "2.4" <<endl;
+				m.lock(); m2.lock();			cout << "2.5" <<endl;
 				bool b=true,b1=true;// b-есть такой пользователь, b1-совпадают логин и пароль и нет подключения
-				try{
+				try{			cout << "2.6" <<endl;
 					if(data1.find(login)==data1.end()) b=false; //(нет элемента с таким индексом?)
 					else{
 						if(data1[login]!=nullptr && data1[login]->login==login && data1[login]->passw==pass && data1[login]->t==nullptr){
 						}else b1=false;
-					}
+					}			cout << "2.7" <<endl;
 				}catch(...){//исключение - нет такого пользователя
-					b=false;
+					b=false;			cout << "2.8" <<endl;
 				}
-				if(b && b1){
+				if(b && b1){			cout << "2.9" <<endl;
 					try{
-						writeS(*s,"ok"); //авторизация успешна						
+						writeS(*s,"ok"); 			cout << "2.A" <<endl;//авторизация успешна						
 						//отправка списка пользователей
 						for(auto ms: data1){
 							writeS(*s,ms.second->login);
@@ -289,8 +289,7 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 					remove("serverdb1.dat");	
 					CopyFile(//сохраняем временную копию файла для редактирования
 					  	"serverdb.dat",
-  						"serverdb1.dat",
-  						false
+  						"serverdb1.dat"
 					);
 					FILE *f=fopen("serverdb1.dat","ab");
 					writeS(f,login);
@@ -299,8 +298,7 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 					fclose(f);
 					CopyFile(//заменяем временной копией исходный файл
 					  	"serverdb1.dat",
-  						"serverdb.dat",
-  						false
+  						"serverdb.dat"
 					);					
 					//
 					try{
@@ -326,7 +324,7 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 			}
 		}
 	}
-	chatserver::done(){
+	void chatserver::done(){
 		cout << "~chatserver()-B" << endl;
 		m.lock();
 		for(auto i:data1) if(i.second!=nullptr){

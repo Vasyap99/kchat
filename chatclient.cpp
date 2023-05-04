@@ -11,7 +11,9 @@
 #include "kko_ObjectMapper.h"
 #include <fstream>
 #include <unistd.h>
-#include <winbase.h>
+//#include <winbase.h>
+
+#include "kko_files.h"
 
 
 using namespace kko;
@@ -69,8 +71,7 @@ void cacheMsg(const string&LOGIN,const string& msg1){//кэширование сообщения
 	remove(("msgs-"+LOGIN+".dat1").c_str());	
 		CopyFile(//сохраняем временную копию файла для редактирования
 		  	(string("msgs-")+LOGIN+".dat").c_str(),
-			(string("msgs-")+LOGIN+".dat1").c_str(),
-			false
+			(string("msgs-")+LOGIN+".dat1").c_str()
 		);				
 	//
 	fstream f( ("msgs-"+LOGIN+".dat1").c_str() , ios::app | ios::ate );
@@ -81,8 +82,7 @@ void cacheMsg(const string&LOGIN,const string& msg1){//кэширование сообщения
 
 		CopyFile(//заменяем временной копией исходный файл
 		  	(string("msgs-")+LOGIN+".dat1").c_str(),
-			(string("msgs-")+LOGIN+".dat").c_str(),
-			false
+			(string("msgs-")+LOGIN+".dat").c_str()
 		);	
 }
 
@@ -174,11 +174,11 @@ void chatclient::run1(int argc, char** argv){
 	cout << "2 logining" << endl;	
 	string res;
 	try{
-		writeS(s,"A");
-		writeS(s,login1);
-		writeS(s,pass1);	
-		res=readS(s);
-	}catch(...){
+		writeS(s,"A");			cout << "2.1" <<endl;
+		writeS(s,login1);			cout << "2.2" <<endl;
+		writeS(s,pass1);				cout << "2.3" <<endl;
+		res=readS(s);			cout << "2.4" <<endl;
+	}catch(...){			cout << "2.5" <<endl;
 		return;
 	}
 	if(res!="ok"){
@@ -198,7 +198,7 @@ void chatclient::run1(int argc, char** argv){
 			string FIO=readS(s);
 			clientstruct *cs;
 			data1.insert(make_pair(login,cs=new clientstruct(FIO)));
-			if (access(("msgs-"+login+".dat").c_str(), F_OK) == 0) 
+			if (fExists("msgs-"+login+".dat") ) 
 				loadMsgs(login,cs);
 			cout << "reading users list: " << login << FIO << endl;
 		}	
