@@ -21,19 +21,19 @@ namespace kko{
 				if(s[i]=='\\'){
 					i++;
 					switch(s[i]){
-						'n':
+						case 'n':
 							r+='\n';
 							break;
-						'r':
+						case 'r':
 							r+='\r';
 							break;
-						'\\':
+						case '\\':
 							r+='\\';
 							break;
-						'"':
+						case '"':
 							r+='"';
 							break;																					
-						't':
+						case 't':
 							r+='\t';
 							break;
 						default:
