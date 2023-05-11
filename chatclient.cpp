@@ -16,6 +16,10 @@
 #include "kko_files.h"
 
 
+
+#include "mysysinfo.h"
+
+
 using namespace kko;
 using namespace std;
 
@@ -303,6 +307,8 @@ void chatclient::run1(int argc, char** argv){
 
 int main(int argc, char** argv) {
 	setlocale (LC_ALL,"Russian");
+
+    print_sysinfo();
 	
 	cc.run1(argc,argv);
 	cc.done();

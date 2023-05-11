@@ -1,32 +1,39 @@
 
 extern "C"{
-	#include <synchapi.h>
+	#include <fcntl.h>
+	#include <sys/stat.h>
+	#include <semaphore.h>
+	#include <stdio.h>
+	#include <string>
 }
+
+#define SEMAPHORE_NAME "/my_named_semaphore"
 
 
 namespace kko{
+    static int nnn;
 	class Semaphore{
 		int max;
-		HANDLE h;
+		//HANDLE h;
+		sem_t *sem;
+
+		
 	public:
 		Semaphore(int max=1)
 			:max(max)
 		{
-			h=CreateSemaphore( 
-	    		NULL,	// ??? ????????
-	    		max,	// ????????? ?????????
-	    		max,	// ???????????? ?????????
-	    		NULL	// ??? ?????
-			);
+			nnn++;
+			sem = sem_open( (string(SEMAPHORE_NAME)+std::to_string(nnn)).c_str(), O_CREAT, 0777, 0);
+			sem_init(sem, 0, 1);
 		}
 		void lock(){
-			WaitForSingleObject(h,INFINITE);
+			sem_wait(sem);
 		}
 		void unlock(){
-			ReleaseSemaphore(h,1,NULL);
+			sem_post(sem);
 		}
 		~Semaphore(){
-			CloseHandle(h);
+			sem_destroy(sem);
 		}
 	};
 }
