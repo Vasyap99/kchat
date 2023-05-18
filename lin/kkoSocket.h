@@ -25,6 +25,9 @@ extern "C"{
 
 #include "kpy.h"
 
+#include <chrono>
+#include <thread>
+
 namespace kko{
 
 	using namespace std;
@@ -152,10 +155,19 @@ bool isclosed(int sock) {
 			ClientConn=S;
 		}
 		string recv(int n){
+            int ms=0;
 			string res="";			
 			while(res.length()<n){
 				vector <char> buff(n-res.length()); 
 				int packet_size = ::recv(ClientConn, buff.data(), buff.size(), 0);
+                // 
+				if(packet_size>0) ms=0;
+				else{
+					if(ms==0) ms=1;
+                    if(ms<1000) ms*=2;
+					sleep(ms);
+				}
+                // 
 				if(packet_size<0 || isclosed(ClientConn)){
 					throw SocketError();
 				}else{
@@ -165,9 +177,18 @@ bool isclosed(int sock) {
 			return res;
 		}
 		int send(string s){
+            int ms=0;
 			//vector <char> buff(s.size());	
 			while(s.length()>0){
 				int packet_size = ::send(ClientConn, /*buff.data()*/s.c_str(), /*buff.size()*/s.length(), 0);
+                // 
+				if(packet_size>0) ms=0;
+				else{
+					if(ms==0) ms=1;
+                    if(ms<1000) ms*=2;
+					sleep(ms);
+				}
+                // 
 				if(packet_size<0 || isclosed(ClientConn)){
 					throw SocketError();
 				}else{

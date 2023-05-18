@@ -13,6 +13,8 @@ extern "C"{
 
 #include "kpy.h"
 
+#include "kkoTime.h"
+
 namespace kko{
 
 	using namespace std;
@@ -124,10 +126,19 @@ namespace kko{
 			ClientConn=S;
 		}
 		string recv(int n){
+			int ms=0;
 			string res="";			
 			while(res.length()<n){
 				vector <char> buff(n-res.length()); 
 				int packet_size = ::recv(ClientConn, buff.data(), buff.size(), 0);
+                // 
+				if(packet_size>0) ms=0;
+				else{
+					if(ms==0) ms=1;
+                    if(ms<1000) ms*=2;
+					sleep(ms);
+				}
+                // 				
 				if(packet_size==SOCKET_ERROR){
 					throw SocketError();
 				}else{
@@ -137,9 +148,18 @@ namespace kko{
 			return res;
 		}
 		int send(string s){
+			int ms=0;
 			//vector <char> buff(s.size());	
 			while(s.length()>0){
 				int packet_size = ::send(ClientConn, /*buff.data()*/s.c_str(), /*buff.size()*/s.length(), 0);
+                // 
+				if(packet_size>0) ms=0;
+				else{
+					if(ms==0) ms=1;
+                    if(ms<1000) ms*=2;
+					sleep(ms);
+				}
+                // 
 				if(packet_size==SOCKET_ERROR){
 					throw SocketError();
 				}else{
