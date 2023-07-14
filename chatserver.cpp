@@ -15,6 +15,66 @@
 
 using namespace kko;
 
+
+class logger{
+	mutex m;
+	string process(string &&s){//замена кода перевода на другую строку на другой код
+		string res;
+		for(int i=0;i<s.size();i++){
+			if(s[i]=='\r') res+=' ';
+			else res+=s[i];
+		}
+		return std::move(res);
+	}
+	string process(const string &s){//замена кода перевода на другую строку на другой код
+		string res;
+		for(int i=0;i<s.size();i++){
+			if(s[i]=='\r') res+=' ';
+			else res+=s[i];
+		}
+		return std::move(res);
+	}
+	FILE *t;
+public:
+	void write(string &&msg){//запись в лог
+		m.lock();
+		FILE *f=fopen("log.txt","ab");
+		writeS(f,process(msg));
+		fclose(f);
+		m.unlock();
+	}	
+	void write(const string &msg){//запись в лог
+		m.lock();
+		FILE *f=fopen("log.txt","ab");
+		writeS(f,process(msg));
+		fclose(f);
+		m.unlock();
+	}	
+	string read(int n){
+		m.lock();
+		FILE *f=fopen("log.txt","r");
+		
+		string res;
+		
+		for(int j=0;j<n;j++)
+			res=readS(f);
+				
+		fclose(f);		
+		m.unlock();				
+		
+		return res;
+	}
+	logger(){
+		t=fopen("tmp.txt","wb");
+	}
+	~logger(){
+		fclose(t);
+	}	
+};
+
+logger L;
+
+
 struct serverstruct{
 	string fio;
 	string login;
@@ -165,9 +225,11 @@ void run(serverstruct *d){//нить обработки соединения с клиентом
 			if(cmd=="S"){
 				string LOGIN=readS(*(d->s));
 				string msg=readS(*(d->s));
+				L.write(string(">>>MSG ")+LOGIN+":"+msg);
 				sendMsg(d,msg,LOGIN);				
 			}else if(cmd=="A"){ //"S" - отправка сообщения всем пользователям
 				string msg=readS(*(d->s));			
+				L.write(string(">>>MSG ")+"ALL:"+msg);				
 				sendMsgAll(d,msg);
 			}
 		}					
